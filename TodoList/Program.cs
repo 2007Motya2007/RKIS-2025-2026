@@ -26,6 +26,7 @@
 				else if (command.StartsWith("add ")) AddTodo(command);
 				else if (command.StartsWith("done ")) DoneTodo(command);
 				else if (command.StartsWith("delete ")) DeleteTodo(command);
+				else if (command.StartsWith("update ")) UpdateTodo(command);
 				else if (command == "view") ViewTodo();
 				else Console.WriteLine("Неизвестная команда.");
 			}
@@ -52,6 +53,7 @@
 			Console.WriteLine("add \"текст задачи\" — добавляет новую задачу");
 			Console.WriteLine("done \"index\" — отмечает задачу выполненной");
 			Console.WriteLine("delete \"index\" — удаляет задачу");
+			Console.WriteLine("update \"index\" \"текст задачи\" — обновляет задачу");
 			Console.WriteLine("view — выводит все задачи");
 			Console.WriteLine("exit — выход из программы");
 		}
@@ -96,6 +98,17 @@
 
 			index--;
 			Console.WriteLine($"Задача {index} удалена.");
+		}
+		private static void UpdateTodo(string command)
+		{
+			var parts = command.Split(' ', 3);
+			var index = int.Parse(parts[1]);
+			var task = parts[2];
+
+			todos[index] = task;
+			dates[index] = DateTime.Now;
+
+			Console.WriteLine("Задача обновлена");
 		}
 		private static void ViewTodo()
 		{
