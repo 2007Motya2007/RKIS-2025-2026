@@ -1,14 +1,11 @@
-﻿namespace TodoList
+﻿using System.Text;
+
+namespace TodoList
 {
     class Program
     {
-        private static string firstName, lastName;
-        private static int age;
-
-        private static string[] todos = new string[2];
-        private static bool[] statuses = new bool[2];
-        private static DateTime[] dates = new DateTime[2];
-        private static int index;
+        private static TodoList todoList = new TodoList();
+        private static Profile profile;
 
         public static void Main()
         {
@@ -65,9 +62,9 @@
         private static void AddUser()
         {
             Console.Write("Введите ваше имя: ");
-            firstName = Console.ReadLine() ?? "";
+            string firstName = Console.ReadLine() ?? "";
             Console.Write("Введите вашу фамилию: ");
-            lastName = Console.ReadLine() ?? "";
+            string lastName = Console.ReadLine() ?? "";
 
             Console.Write("Введите ваш год рождения: ");
             if (!int.TryParse(Console.ReadLine(), out int year))
@@ -75,9 +72,9 @@
                 Console.WriteLine("Некорректный год рождения. Будет использован 2000 год.");
                 year = 2000;
             }
-            age = DateTime.Now.Year - year;
 
-            Console.WriteLine($"Добавлен пользователь {firstName} {lastName}, возраст - {age}");
+            profile = new Profile(firstName, lastName, year);
+            Console.WriteLine(profile.GetInfo());
         }
 
         private static void HelpCommand()
@@ -101,16 +98,14 @@
 
         private static void ShowProfile()
         {
-            Console.WriteLine($"{firstName} {lastName}, возраст - {age}");
+            Console.WriteLine(profile.GetInfo());
         }
 
         private static void AddTodoCommand(string[] parts)
         {
             bool multiline = false;
             if (parts.Length > 1 && (parts[1] == "--multiline" || parts[1] == "-m"))
-            {
                 multiline = true;
-            }
 
             if (multiline)
             {
@@ -124,7 +119,8 @@
                     return;
                 }
                 string task = string.Join(" ", parts, 1, parts.Length - 1);
-                AddTodo(task);
+                todoList.Add(new TodoItem(task));
+                Console.WriteLine($"Добавлена задача: {task}");
             }
         }
 
@@ -141,26 +137,15 @@
                 lines.Add(line);
             }
             string fullText = string.Join("\n", lines);
-            AddTodo(fullText);
-        }
-
-        private static void AddTodo(string task)
-        {
-            if (string.IsNullOrWhiteSpace(task))
+            if (!string.IsNullOrWhiteSpace(fullText))
+            {
+                todoList.Add(new TodoItem(fullText));
+                Console.WriteLine("Добавлена многострочная задача.");
+            }
+            else
             {
                 Console.WriteLine("Задача не может быть пустой.");
-                return;
             }
-
-            if (index == todos.Length)
-                ExpandArrays();
-
-            todos[index] = task;
-            statuses[index] = false;
-            dates[index] = DateTime.Now;
-
-            Console.WriteLine($"Добавлена задача: {index}) {task}");
-            index++;
         }
 
         private static void DoneTodoCommand(string[] parts)
@@ -175,14 +160,16 @@
                 Console.WriteLine("Индекс должен быть числом.");
                 return;
             }
-            if (idx < 0 || idx >= index)
+            try
+            {
+                var item = todoList.GetItem(idx);
+                item.MarkDone();
+                Console.WriteLine($"Задача \"{item.Text}\" отмечена выполненной.");
+            }
+            catch (IndexOutOfRangeException)
             {
                 Console.WriteLine("Задачи с таким индексом не существует.");
-                return;
             }
-            statuses[idx] = true;
-            dates[idx] = DateTime.Now;
-            Console.WriteLine($"Задача \"{todos[idx]}\" отмечена выполненной.");
         }
 
         private static void DeleteTodoCommand(string[] parts)
@@ -197,26 +184,15 @@
                 Console.WriteLine("Индекс должен быть числом.");
                 return;
             }
-            if (idx < 0 || idx >= index)
+            try
+            {
+                todoList.Delete(idx);
+                Console.WriteLine($"Задача с индексом {idx} удалена.");
+            }
+            catch (IndexOutOfRangeException)
             {
                 Console.WriteLine("Задачи с таким индексом не существует.");
-                return;
             }
-
-            for (int i = idx; i < index - 1; i++)
-            {
-                todos[i] = todos[i + 1];
-                statuses[i] = statuses[i + 1];
-                dates[i] = dates[i + 1];
-            }
-            index--;
-            if (index < todos.Length)
-            {
-                todos[index] = null!;
-                statuses[index] = false;
-                dates[index] = default;
-            }
-            Console.WriteLine($"Задача с индексом {idx} удалена.");
         }
 
         private static void UpdateTodoCommand(string[] parts)
@@ -231,29 +207,27 @@
                 Console.WriteLine("Индекс должен быть числом.");
                 return;
             }
-            if (idx < 0 || idx >= index)
-            {
-                Console.WriteLine("Задачи с таким индексом не существует.");
-                return;
-            }
-
             string newText = string.Join(" ", parts, 2, parts.Length - 2);
             if (string.IsNullOrWhiteSpace(newText))
             {
                 Console.WriteLine("Текст задачи не может быть пустым.");
                 return;
             }
-
-            todos[idx] = newText;
-            dates[idx] = DateTime.Now;
-            Console.WriteLine($"Задача {idx} обновлена.");
+            try
+            {
+                var item = todoList.GetItem(idx);
+                item.UpdateText(newText);
+                Console.WriteLine($"Задача {idx} обновлена.");
+            }
+            catch (IndexOutOfRangeException)
+            {
+                Console.WriteLine("Задачи с таким индексом не существует.");
+            }
         }
 
         private static void ViewTodoCommand(string[] parts)
         {
-            bool showIndex = false;
-            bool showStatus = false;
-            bool showDate = false;
+            bool showIndex = false, showStatus = false, showDate = false;
 
             for (int i = 1; i < parts.Length; i++)
             {
@@ -296,61 +270,7 @@
                 }
             }
 
-            if (!showIndex && !showStatus && !showDate)
-            {
-                for (int i = 0; i < index; i++)
-                {
-                    string task = todos[i];
-                    string shortTask = task.Length > 30 ? task.Substring(0, 30) + "..." : task;
-                    Console.WriteLine($"{shortTask}");
-                }
-                return;
-            }
-
-            var rows = new List<(string idx, string task, string status, string date)>();
-            int maxIdxLen = 0, maxTaskLen = 0, maxStatusLen = 0, maxDateLen = 0;
-
-            for (int i = 0; i < index; i++)
-            {
-                string idxStr = showIndex ? i.ToString() : "";
-                string taskFull = todos[i];
-                string taskShort = taskFull.Length > 30 ? taskFull.Substring(0, 30) + "..." : taskFull;
-                string statusStr = showStatus ? (statuses[i] ? "Выполнена" : "Не выполнена") : "";
-                string dateStr = showDate ? dates[i].ToString("dd.MM.yyyy HH:mm") : "";
-
-                rows.Add((idxStr, taskShort, statusStr, dateStr));
-
-                if (showIndex) maxIdxLen = Math.Max(maxIdxLen, idxStr.Length);
-                maxTaskLen = Math.Max(maxTaskLen, taskShort.Length);
-                if (showStatus) maxStatusLen = Math.Max(maxStatusLen, statusStr.Length);
-                if (showDate) maxDateLen = Math.Max(maxDateLen, dateStr.Length);
-            }
-
-            string separator = "+";
-            if (showIndex) separator += new string('-', maxIdxLen + 2) + "+";
-            separator += new string('-', maxTaskLen + 2) + "+";
-            if (showStatus) separator += new string('-', maxStatusLen + 2) + "+";
-            if (showDate) separator += new string('-', maxDateLen + 2) + "+";
-
-            Console.WriteLine(separator);
-            string header = "|";
-            if (showIndex) header += $" {"Индекс".PadRight(maxIdxLen)} |";
-            header += $" {"Задача".PadRight(maxTaskLen)} |";
-            if (showStatus) header += $" {"Статус".PadRight(maxStatusLen)} |";
-            if (showDate) header += $" {"Дата изменения".PadRight(maxDateLen)} |";
-            Console.WriteLine(header);
-            Console.WriteLine(separator);
-
-            foreach (var row in rows)
-            {
-                string line = "|";
-                if (showIndex) line += $" {row.idx.PadRight(maxIdxLen)} |";
-                line += $" {row.task.PadRight(maxTaskLen)} |";
-                if (showStatus) line += $" {row.status.PadRight(maxStatusLen)} |";
-                if (showDate) line += $" {row.date.PadRight(maxDateLen)} |";
-                Console.WriteLine(line);
-            }
-            Console.WriteLine(separator);
+            todoList.View(showIndex, showStatus, showDate);
         }
 
         private static void ReadTodoCommand(string[] parts)
@@ -365,24 +285,15 @@
                 Console.WriteLine("Индекс должен быть числом.");
                 return;
             }
-            if (idx < 0 || idx >= index)
+            try
+            {
+                var item = todoList.GetItem(idx);
+                Console.WriteLine(item.GetFullInfo());
+            }
+            catch (IndexOutOfRangeException)
             {
                 Console.WriteLine("Задачи с таким индексом не существует.");
-                return;
             }
-
-            Console.WriteLine($"--- Задача #{idx} ---");
-            Console.WriteLine($"Текст:\n{todos[idx]}");
-            Console.WriteLine($"Статус: {(statuses[idx] ? "Выполнена" : "Не выполнена")}");
-            Console.WriteLine($"Последнее изменение: {dates[idx]:dd.MM.yyyy HH:mm}");
-        }
-
-        private static void ExpandArrays()
-        {
-            int newSize = todos.Length * 2;
-            Array.Resize(ref todos, newSize);
-            Array.Resize(ref statuses, newSize);
-            Array.Resize(ref dates, newSize);
         }
     }
 }
