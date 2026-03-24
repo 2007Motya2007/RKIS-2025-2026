@@ -24,6 +24,7 @@
 				else if (command == "profile") ShowProfile();
 				else if (command == "exit") break;
 				else if (command.StartsWith("add ")) AddTodo(command);
+				else if (command.StartsWith("done ")) DoneTodo(command);
 				else if (command == "view") ViewTodo();
 				else Console.WriteLine("Неизвестная команда.");
 			}
@@ -48,6 +49,7 @@
 			Console.WriteLine("help — выводит список всех доступных команд с кратким описанием");
 			Console.WriteLine("profile — выводит данные пользователя");
 			Console.WriteLine("add \"текст задачи\" — добавляет новую задачу");
+			Console.WriteLine("done \"index\" — отмечает задачу выполненной");
 			Console.WriteLine("view — выводит все задачи");
 			Console.WriteLine("exit — выход из программы");
 		}
@@ -69,6 +71,15 @@
 
 			Console.WriteLine($"Добавлена задача: {index}) {task}");
 			index++;
+		}
+		private static void DoneTodo(string command)
+		{
+			var parts = command.Split(' ', 2);
+			var index = int.Parse(parts[1]);
+			statuses[index] = true;
+			dates[index] = DateTime.Now;
+
+			Console.WriteLine("Задача " + todos[index] + " отмечена выполненной");
 		}
 
 		private static void ViewTodo()
