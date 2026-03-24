@@ -15,7 +15,7 @@
 			int age = DateTime.Now.Year - year;
 			Console.WriteLine($"Добавлен пользователь {firstName} {lastName}, возраст - {age}");
 
-			string[] todos = new string[2] { "test", "test" };
+			string[] todos = new string[2];
 			int index = 0;
 
 			while (true)
@@ -40,6 +40,25 @@
 				{
 					Console.WriteLine("Выход из программы.");
 					break;
+				}
+				else if (command.StartsWith("add "))
+				{
+					string task = command.Split("add ")[1];
+					if (index == todos.Length)
+					{
+						string[] newTodos = new string[todos.Length * 2];
+						for (int i = 0; i < todos.Length; i++)
+						{
+							newTodos[i] = todos[i];
+						}
+
+						todos = newTodos;
+					}
+
+					todos[index] = task;
+					index++;
+
+					Console.WriteLine("Добавлена задача: " + task);
 				}
 				else if (command == "view")
 				{
