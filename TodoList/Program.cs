@@ -20,9 +20,25 @@
 				Console.Write("Введите команду: ");
 				string command = Console.ReadLine();
 
-				if (command == "profile")
+				if (command == "help")
+				{
+					Console.WriteLine("Команды:");
+					Console.WriteLine("help — выводит список всех доступных команд с кратким описанием");
+					Console.WriteLine("profile — выводит данные пользователя");
+					Console.WriteLine("exit — выход из программы");
+				}
+				else if (command == "profile")
 				{
 					Console.WriteLine(firstName + " " + lastName + ", - " + age);
+				}
+				else if (command == "exit")
+				{
+					Console.WriteLine("Выход из программы.");
+					break;
+				}
+				else
+				{
+					Console.WriteLine("Неизвестная команда.");
 				}
 			}
 		}
