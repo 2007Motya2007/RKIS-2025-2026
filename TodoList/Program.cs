@@ -6,6 +6,8 @@
 		private static int age;
 
 		private static string[] todos = new string[2];
+		private static bool[] statuses = new bool[2];
+		private static DateTime[] dates = new DateTime[2];
 		private static int index;
 
 		public static void Main()
@@ -59,15 +61,11 @@
 		{
 			var task = command.Split("add ", 2)[1];
 			if (index == todos.Length)
-			{
-				string[] newTodos = new string[todos.Length * 2];
-				for (int i = 0; i < todos.Length; i++)
-				{
-					newTodos[i] = todos[i];
-				}
-			}
+				ExpandArrays();
 
 			todos[index] = task;
+			statuses[index] = false;
+			dates[index] = DateTime.Now;
 
 			Console.WriteLine($"Добавлена задача: {index}) {task}");
 			index++;
@@ -79,11 +77,19 @@
 			for (var i = 0; i < todos.Length; i++)
 			{
 				var todo = todos[i];
+				var status = statuses[i];
+				var date = dates[i];
 
 				if (!string.IsNullOrEmpty(todo))
-					Console.WriteLine($"{i}) {todo}");
+					Console.WriteLine($"{i}) {date} {todo}, является выполненой:{status}");
 			}
 		}
-
+		private static void ExpandArrays()
+		{
+			var newSize = todos.Length * 2;
+			Array.Resize(ref todos, newSize);
+			Array.Resize(ref statuses, newSize);
+			Array.Resize(ref dates, newSize);
+		}
 	}
 }
