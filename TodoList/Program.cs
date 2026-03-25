@@ -1,16 +1,59 @@
 ﻿using System;
+using System.IO;
 
 namespace TodoList
 {
     class Program
     {
-        private static TodoList todoList = new TodoList();
-        private static Profile profile;
+        private static readonly string dataDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data");
+        private static readonly string profilePath = Path.Combine(dataDir, "profile.txt");
+        private static readonly string todoPath = Path.Combine(dataDir, "todo.csv");
 
         public static void Main()
         {
             Console.WriteLine("Работу выполнили Сироткин и Галои 3834");
-            AddUser();
+
+            FileManager.EnsureDataDirectory(dataDir);
+
+            Profile profile;
+            if (File.Exists(profilePath))
+            {
+                try
+                {
+                    profile = FileManager.LoadProfile(profilePath);
+                    Console.WriteLine("Профиль загружен: " + profile.GetInfo());
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Ошибка загрузки профиля: {ex.Message}. Будет создан новый.");
+                    profile = CreateProfileFromUser();
+                    FileManager.SaveProfile(profile, profilePath);
+                }
+            }
+            else
+            {
+                profile = CreateProfileFromUser();
+                FileManager.SaveProfile(profile, profilePath);
+            }
+
+            TodoList todoList;
+            if (File.Exists(todoPath))
+            {
+                try
+                {
+                    todoList = FileManager.LoadTodos(todoPath);
+                    Console.WriteLine("Задачи загружены.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Ошибка загрузки задач: {ex.Message}. Начинаем с пустого списка.");
+                    todoList = new TodoList();
+                }
+            }
+            else
+            {
+                todoList = new TodoList();
+            }
 
             while (true)
             {
@@ -18,7 +61,7 @@ namespace TodoList
                 string? input = Console.ReadLine();
                 if (input == null) break;
 
-                ICommand? command = CommandParser.Parse(input, todoList, profile);
+                ICommand? command = CommandParser.Parse(input, todoList, profile, todoPath);
                 if (command == null)
                 {
                     Console.WriteLine("Неизвестная команда. Введите 'help' для списка команд.");
@@ -28,7 +71,7 @@ namespace TodoList
             }
         }
 
-        private static void AddUser()
+        private static Profile CreateProfileFromUser()
         {
             Console.Write("Введите ваше имя: ");
             string firstName = Console.ReadLine() ?? "";
@@ -42,8 +85,9 @@ namespace TodoList
                 year = 2000;
             }
 
-            profile = new Profile(firstName, lastName, year);
+            var profile = new Profile(firstName, lastName, year);
             Console.WriteLine(profile.GetInfo());
+            return profile;
         }
     }
 }

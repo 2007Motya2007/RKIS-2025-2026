@@ -13,6 +13,8 @@ namespace TodoList
             _count = 0;
         }
 
+        public int Count => _count;
+
         public void Add(TodoItem item)
         {
             if (_count == _items.Length)

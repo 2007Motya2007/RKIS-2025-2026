@@ -5,7 +5,7 @@ namespace TodoList
 {
     public static class CommandParser
     {
-        public static ICommand? Parse(string input, TodoList todoList, Profile profile)
+        public static ICommand? Parse(string input, TodoList todoList, Profile profile, string todoFilePath)
         {
             if (string.IsNullOrWhiteSpace(input))
                 return null;
@@ -47,7 +47,7 @@ namespace TodoList
                             Console.WriteLine("Использование: add \"текст задачи\"");
                             return null;
                         }
-                        return new AddCommand(todoList, text, multiline);
+                        return new AddCommand(todoList, text, multiline, todoFilePath);
                     }
 
                 case "done":
@@ -56,7 +56,7 @@ namespace TodoList
                         Console.WriteLine("Использование: done <индекс>");
                         return null;
                     }
-                    return new DoneCommand(todoList, doneIndex);
+                    return new DoneCommand(todoList, doneIndex, todoFilePath);
 
                 case "delete":
                     if (parts.Length < 2 || !int.TryParse(parts[1], out int deleteIndex))
@@ -64,7 +64,7 @@ namespace TodoList
                         Console.WriteLine("Использование: delete <индекс>");
                         return null;
                     }
-                    return new DeleteCommand(todoList, deleteIndex);
+                    return new DeleteCommand(todoList, deleteIndex, todoFilePath);
 
                 case "update":
                     if (parts.Length < 3 || !int.TryParse(parts[1], out int updateIndex))
@@ -73,7 +73,7 @@ namespace TodoList
                         return null;
                     }
                     string newText = string.Join(" ", parts.Skip(2));
-                    return new UpdateCommand(todoList, updateIndex, newText);
+                    return new UpdateCommand(todoList, updateIndex, newText, todoFilePath);
 
                 case "view":
                     {
